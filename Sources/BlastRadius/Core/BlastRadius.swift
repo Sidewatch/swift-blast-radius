@@ -28,9 +28,23 @@ public enum BlastRadius {
     /// ``defaultSkip``; assign to override (e.g. from a user preference — a
     /// project with real sources in `dist/` needs it off the list).
     ///
-    /// - Important: Global mutable state read by every ``analyze(file:root:changedLines:enclosingSymbol:)``
-    ///   walk. Set it during start-up, not concurrently with an analysis.
-    public static var skip: Set<String> = defaultSkip
+    /// Lock-guarded for the same reason as `FileTools.SkippedDirs.names`, which this
+    /// mirrors: it is written from a settings pane on the main thread and read by analysis
+    /// walks on background queues, and a `Set` is not atomic — so an unsynchronized write
+    /// during a walk risks a torn read rather than merely a stale answer. Uncontended in
+    /// practice (one write at start-up, reads once per walk).
+    ///
+    /// - Important: Still global state read by every
+    ///   ``analyze(file:root:changedLines:enclosingSymbol:)`` walk. The lock makes
+    ///   concurrent access safe, not meaningful — set it during start-up so a walk cannot
+    ///   observe half of a settings change.
+    public static var skip: Set<String> {
+        get { lock.lock(); defer { lock.unlock() }; return storedSkip }
+        set { lock.lock(); defer { lock.unlock() }; storedSkip = newValue }
+    }
+
+    private static let lock = NSLock()
+    private nonisolated(unsafe) static var storedSkip: Set<String> = defaultSkip
 
     /// Source file extensions searched for usages.
     public static let exts: Set<String> = [
