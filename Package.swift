@@ -14,7 +14,8 @@ let package = Package(
         .library(name: "BlastRadius", targets: ["BlastRadius"]),
     ],
     targets: [
-        .target(name: "BlastRadius", path: "Sources"),
+        .target(name: "BlastRadius", path: "Sources",
+                swiftSettings: [.unsafeFlags(["-strict-concurrency=complete"])]),
         .testTarget(name: "BlastRadiusTests", dependencies: ["BlastRadius"], path: "Tests"),
     ]
 )
