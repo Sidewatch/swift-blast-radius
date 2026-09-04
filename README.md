@@ -54,6 +54,12 @@ for impact in impacts {
 
 > ⚠️ It's a deterministic **text search**, not a semantic call graph — it can match a same-named symbol in an unrelated file and doesn't follow imports/scoping. That's the trade for being fast and language-agnostic. `analyze` walks and reads the whole project synchronously — run it off the main thread.
 
+## For agents
+
+Read `CONTRIBUTING.md` first: the folder layout and the PR rules. `swift test` is the whole
+check, and a new test must fail before the change it covers. `CLAUDE.md` / `AGENTS.md` carry a
+module map.
+
 ## License
 
 MIT
