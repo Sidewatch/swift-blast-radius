@@ -2,12 +2,17 @@
 //  BlastRadiusTests.swift
 //  Tests for SwiftBlastRadius
 //
+//  Tests for `BlastRadius.analyze` over a scratch project: callers and covering tests per
+//  changed symbol.
+//
 //  Created by David Sherlock on 7/9/26.
 //
 
 import XCTest
 @testable import BlastRadius
 
+/// Tests for `BlastRadius.analyze` over a scratch project: callers and covering tests per
+/// changed symbol.
 final class BlastRadiusTests: XCTestCase {
 
     private var scratch: [URL] = []
