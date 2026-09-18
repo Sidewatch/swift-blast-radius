@@ -61,6 +61,23 @@ final class BlastRadiusTests: XCTestCase {
         XCTAssertTrue(impact.callers.allSatisfy { !$0.isTest })
     }
 
+    func testCRLFFilesReportTheLineWithoutItsCarriageReturn() throws {
+        // A file authored on Windows ends every line in CRLF. The scan splits on `\n` and trimmed
+        // with `.whitespaces`, which does not contain CR, so every location's text carried a
+        // trailing `\r` into the panel.
+        let root = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("blast-crlf-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        scratch.append(root)
+        try "func foo() {\r\n    return\r\n}\r\n".write(to: root.appendingPathComponent("changed.swift"), atomically: true, encoding: .utf8)
+        try "func bar() {\r\n    foo()\r\n}\r\n".write(to: root.appendingPathComponent("caller.swift"), atomically: true, encoding: .utf8)
+        let impacts = BlastRadius.analyze(file: root.appendingPathComponent("changed.swift"), root: root,
+                                          changedLines: [2]) { _, _ in ["foo"] }
+        let caller = try XCTUnwrap(impacts.first?.callers.first { $0.file == "caller.swift" })
+        XCTAssertEqual(caller.line, 2)
+        XCTAssertEqual(caller.text, "foo()", "the location text is the trimmed line — a CR is not content")
+    }
+
     func testNoChangedSymbolsYieldsNothing() throws {
         let root = try makeProject()
         let changed = root.appendingPathComponent("changed.swift")

@@ -194,7 +194,7 @@ public enum BlastRadius {
                     guard !slots[s].capped else { continue }
                     allCapped = false
                     guard slots[s].regex.firstMatch(in: line, range: r) != nil else { continue }
-                    let loc = BlastLocation(file: relPath, line: i + 1, text: line.trimmingCharacters(in: .whitespaces), absPath: f.path, isTest: isTest)
+                    let loc = BlastLocation(file: relPath, line: i + 1, text: line.trimmingCharacters(in: .whitespacesAndNewlines), absPath: f.path, isTest: isTest)
                     if isTest { slots[s].tests.append(loc) } else { slots[s].callers.append(loc) }
                     if slots[s].callers.count + slots[s].tests.count > 300 { slots[s].capped = true }
                 }

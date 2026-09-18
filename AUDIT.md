@@ -20,6 +20,18 @@ dead-code and risk-pattern scans, docs drift); line-by-line logic review was tar
 - Build: clean. Tests: green.
 - Nothing to fix in this package.
 
+## Logic review — 18 Sep 2026 (every source and test file, line by line)
+
+Fixed, pinned by a test that fails against the old code:
+
+- **A CRLF file's locations carried the `\r`.** The scan splits on `\n` and trimmed each hit with
+  `.whitespaces`, which does not contain CR, so every `BlastLocation.text` from a Windows-authored
+  file ended in a carriage return. Trimmed with `.whitespacesAndNewlines`.
+
+Reviewed and sound: the per-end whole-word anchoring (`==` still finds itself), the 300-hit cap and
+the all-capped early exit, test-file classification by whole path components, `charOffset` counting
+`\n` only, the batch analysis' per-file buckets.
+
 ## Known non-issues (do not "fix" these again)
 
 - None recorded.
@@ -27,3 +39,4 @@ dead-code and risk-pattern scans, docs drift); line-by-line logic review was tar
 ## History
 
 - 17 Sep 2026 — full audit (app + all 20 libraries), Claude with David.
+- 18 Sep 2026 — logic review (every source and test file, line by line), Claude with David.
