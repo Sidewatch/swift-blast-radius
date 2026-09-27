@@ -25,20 +25,12 @@ public enum BlastRadius {
         "DerivedData", "dist", "build", "__pycache__", ".next", ".cache", "vendor",
     ]
 
-    /// Directory names skipped while walking the project. Defaults to
-    /// ``defaultSkip``; assign to override (e.g. from a user preference — a
-    /// project with real sources in `dist/` needs it off the list).
+    /// Directory names skipped while walking the project. Defaults to ``defaultSkip``; assign to
+    /// override (a project with real sources in `dist/` needs it off the list).
     ///
-    /// Lock-guarded for the same reason as `FileTools.SkippedDirs.names`, which this
-    /// mirrors: it is written from a settings pane on the main thread and read by analysis
-    /// walks on background queues, and a `Set` is not atomic — so an unsynchronized write
-    /// during a walk risks a torn read rather than merely a stale answer. Uncontended in
-    /// practice (one write at start-up, reads once per walk).
-    ///
-    /// - Important: Still global state read by every
-    ///   ``analyze(file:root:changedLines:enclosingSymbol:)`` walk. The lock makes
-    ///   concurrent access safe, not meaningful — set it during start-up so a walk cannot
-    ///   observe half of a settings change.
+    /// Lock-guarded like `FileTools.SkippedDirs.names`: written on the main thread, read by
+    /// walks on background queues. The lock makes access safe, not meaningful — set it at
+    /// start-up so a walk cannot observe half of a settings change.
     public static var skip: Set<String> {
         get { lock.lock(); defer { lock.unlock() }; return storedSkip }
         set { lock.lock(); defer { lock.unlock() }; storedSkip = newValue }
@@ -53,34 +45,23 @@ public enum BlastRadius {
         "java", "c", "cpp", "cc", "h", "hpp", "cs", "kt", "dart", "lua", "scala",
     ]
 
-    /// Analyzes the impact of the changed lines in `file`.
+    /// Analyses the impact of the changed lines (1-based) in `file` across the project at `root`.
     ///
-    /// - Parameters:
-    ///   - file: The changed file.
-    ///   - root: The project root to search.
-    ///   - changedLines: 1-based line numbers that changed in `file`.
-    ///   - enclosingSymbol: Given a character offset into the file text and that
-    ///     text, returns the breadcrumb trail of enclosing symbols; the **last**
-    ///     element is the innermost symbol. (Wire this to your symbol source.)
+    /// - Parameter enclosingSymbol: Given a character offset and the file text, returns the
+    ///   breadcrumb trail of enclosing symbols, innermost **last**.
     /// - Returns: One ``SymbolImpact`` per changed symbol that has any usages.
-    /// - Note: Blocking — reads `file` and walks/reads the whole project tree
-    ///   synchronously. Call off the main thread.
+    /// - Note: Blocking — reads and walks the whole project tree. Call off the main thread.
     public static func analyze(file: URL, root: URL, changedLines: Set<Int>,
                                enclosingSymbol: (_ charOffset: Int, _ text: String) -> [String]) -> [SymbolImpact] {
         analyze(files: [(file, changedLines)], root: root, enclosingSymbol: enclosingSymbol)[file] ?? []
     }
 
-    /// Batch form of ``analyze(file:root:changedLines:enclosingSymbol:)`` for a
-    /// whole changeset: the project tree is walked ONCE and every project file is
-    /// read and line-split ONCE, with all changed symbols matched in that single
-    /// pass — per-file calls re-pay the full walk + read per symbol, which is
-    /// what made a many-file Change Impact Map take minutes.
+    /// Batch form of ``analyze(file:root:changedLines:enclosingSymbol:)`` for a whole changeset:
+    /// the tree is walked and every file read ONCE, with all symbols matched in that pass —
+    /// per-file calls re-pay the full walk per symbol, which takes minutes on large changesets.
     ///
-    /// - Parameter files: The changed files with their 1-based changed lines.
-    /// - Returns: Each input file's impacts (same contents and order as the
-    ///   per-file call would produce), keyed by file. Unreadable files get `[]`.
-    /// - Note: Blocking — reads every listed file and walks/reads the whole
-    ///   project tree synchronously. Call off the main thread.
+    /// - Returns: Each input file's impacts, as the per-file call gives them; unreadable files get `[]`.
+    /// - Note: Blocking — walks and reads the whole project tree. Call off the main thread.
     public static func analyze(files: [(file: URL, changedLines: Set<Int>)], root: URL,
                                enclosingSymbol: (_ charOffset: Int, _ text: String) -> [String]) -> [URL: [SymbolImpact]] {
         var perFileSymbols: [(URL, [String])] = []
@@ -105,19 +86,12 @@ public enum BlastRadius {
         return out
     }
 
-    /// Project-wide references to a single named symbol — the "Find References"
-    /// entry point (``analyze(file:root:changedLines:enclosingSymbol:)`` is the
-    /// diff-driven one). Same deterministic whole-word search, so it is honest
-    /// about being NAME-based, not semantic: it finds every whole-word `name`
-    /// (a same-named field, a mention in a string) and can't tell two same-named
-    /// methods on different types apart. That's the right tradeoff for a
-    /// language-agnostic review tool with no language server — but callers should
-    /// present it as "References", not a compiler-accurate call hierarchy.
+    /// Project-wide references to one named symbol — the "Find References" entry point.
+    /// NAME-based, not semantic: it matches every whole-word `name` (fields, strings) and cannot
+    /// tell same-named methods apart, so present it as "References", not a call hierarchy.
     ///
-    /// - Returns: A ``SymbolImpact`` (callers + covering tests), or nil when the
-    ///   symbol has no whole-word hits anywhere in the project.
-    /// - Note: Blocking — walks and reads the project tree synchronously. Call
-    ///   off the main thread.
+    /// - Returns: Callers and covering tests, or nil when nothing matches.
+    /// - Note: Blocking — walks and reads the project tree. Call off the main thread.
     public static func references(to name: String, root: URL) -> SymbolImpact? {
         guard name.count > 1 else { return nil }
         let (callers, tests) = usages(of: name, in: sourceFiles(root), root: root)

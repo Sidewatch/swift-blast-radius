@@ -63,9 +63,8 @@ final class BlastRadiusTests: XCTestCase {
     }
 
     func testCRLFFilesReportTheLineWithoutItsCarriageReturn() throws {
-        // A file authored on Windows ends every line in CRLF. The scan splits on `\n` and trimmed
-        // with `.whitespaces`, which does not contain CR, so every location's text carried a
-        // trailing `\r` into the panel.
+        // A Windows file ends every line in CRLF. The scan splits on `\n`, so trimming must
+        // include CR (`.whitespaces` does not), or every location's text carries a trailing `\r`.
         let root = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("blast-crlf-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
