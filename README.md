@@ -1,3 +1,7 @@
+> **This package has moved.** It is now the `BlastRadius` module of [swift-review-kit](https://github.com/Sidewatch/swift-review-kit), with its full
+> history. Depend on `.package(url: "https://github.com/Sidewatch/swift-review-kit.git", from: "0.1.0")` and the `BlastRadius` product;
+> `import BlastRadius` is unchanged. This repository is archived.
+
 # Swift Blast Radius
 
 *"What's the ripple of this change?"* — for each symbol touched by a diff, find its **callers** and **covering tests** across a project. A fast, deterministic, language-agnostic change-impact tool in the spirit of Find Usages — it surfaces where to look; the human does the reasoning. Pure Foundation, zero dependencies.
