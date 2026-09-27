@@ -1,12 +1,13 @@
 //
 //  BlastRadius.swift
-//  SwiftBlastRadius
+//  BlastRadius
 //
 //  "What's the ripple of this change?" — for each symbol touched by a diff, find
 //  its callers and covering tests across a project. Deterministic whole-word
 //  search (same spirit as Find Usages). The human does the reasoning.
 //
 //  Created by David Sherlock on 7/9/26.
+//  Copyright © 2026 ArrayPress Limited. MIT licence.
 //
 
 import Foundation

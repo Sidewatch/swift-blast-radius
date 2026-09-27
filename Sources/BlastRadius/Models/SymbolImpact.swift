@@ -1,10 +1,11 @@
 //
 //  SymbolImpact.swift
-//  SwiftBlastRadius
+//  BlastRadius
 //
 //  The ripple of one changed symbol: its callers and covering tests.
 //
 //  Created by David Sherlock on 7/9/26.
+//  Copyright © 2026 ArrayPress Limited. MIT licence.
 //
 
 import Foundation
